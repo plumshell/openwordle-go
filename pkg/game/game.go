@@ -3,8 +3,6 @@ package game
 import (
 	"errors"
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/jayjyli/openwordle-go/data"
 )
@@ -23,8 +21,11 @@ const (
 // TODO: make this work for games using words that
 // aren't 5 letters.
 type Game struct {
-	runes  []rune
-	counts map[rune]uint
+	guesses uint
+	limit   uint
+
+	runes  []rune        // The word, as a char array
+	counts map[rune]uint // Letter counts
 }
 
 func NewGame() *Game {
@@ -44,19 +45,28 @@ func NewGame() *Game {
 	}
 
 	return &Game{
-		runes:  runes,
-		counts: counts,
+		guesses: 0,
+		limit:   6, // A standard game is 6 guess attempts
+		runes:   runes,
+		counts:  counts,
 	}
 }
 
 func (g *Game) Guess(guess string) ([]Correctness, error) {
+	if g.limit <= g.guesses {
+		return nil, errors.New("guess limit reached, please start a new game")
+	}
+
 	if err := g.validate(guess); err != nil {
 		return nil, fmt.Errorf("invalid guess: %v", err)
 	}
 
+	g.guesses++
+
 	// Answer correctness array
 	c := make([]Correctness, len(guess))
 
+	// If the answer was solved
 	if string(g.runes) == guess {
 		for i := 0; i < len(c); i++ {
 			c[i] = Correct
@@ -107,19 +117,4 @@ func (g *Game) validate(guess string) error {
 	}
 
 	return nil
-}
-
-func randomWord() string {
-	rand.Seed(time.Now().UnixNano())
-	i := rand.Intn(len(data.ANSWERS))
-	return data.ANSWERS[i]
-}
-
-func copyMap(i map[rune]uint) map[rune]uint {
-	o := map[rune]uint{}
-	for k, v := range i {
-		o[k] = v
-	}
-
-	return o
 }
