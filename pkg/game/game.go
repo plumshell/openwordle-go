@@ -52,6 +52,10 @@ func NewGame() *Game {
 	}
 }
 
+func (g *Game) Remaining() uint {
+	return g.limit - g.guesses
+}
+
 func (g *Game) Guess(guess string) ([]Correctness, error) {
 	if g.limit <= g.guesses {
 		return nil, errors.New("guess limit reached, please start a new game")
