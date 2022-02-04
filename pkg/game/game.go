@@ -12,8 +12,8 @@ type Correctness string
 
 const (
 	Correct   Correctness = "correct"
-	Partial               = "partial"
-	Incorrect             = "incorrect"
+	Partial   Correctness = "partial"
+	Incorrect Correctness = "incorrect"
 )
 
 // An instance of a Wordle game. This stores state,
