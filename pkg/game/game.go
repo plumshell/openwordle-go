@@ -3,6 +3,7 @@ package game
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/jayjyli/openwordle-go/data"
 )
@@ -56,32 +57,47 @@ func (g *Game) Remaining() uint {
 	return g.limit - g.guesses
 }
 
-func (g *Game) Guess(guess string) ([]Correctness, error) {
+func (g *Game) Guess(guess string) (string, error) {
 	if g.limit <= g.guesses {
-		return nil, errors.New("guess limit reached, please start a new game")
+		return "", errors.New("guess limit reached, please start a new game")
 	}
 
 	if err := g.validate(guess); err != nil {
-		return nil, fmt.Errorf("invalid guess: %v", err)
+		return "", fmt.Errorf("invalid guess: %v", err)
 	}
-
-	g.guesses++
-
-	// Answer correctness array
-	c := make([]Correctness, len(guess))
 
 	// If the answer was solved
 	if string(g.runes) == guess {
-		for i := 0; i < len(c); i++ {
-			c[i] = Correct
-		}
-
-		return c, nil
+		return strings.ToUpper(guess), nil
 	}
+
+	r := []rune(guess)
+	ca := g.check(r)
+	var a string
+	for i, c := range ca {
+		char := string(r[i])
+
+		switch c {
+		case Correct:
+			a += strings.ToUpper(char)
+		case Partial:
+			a += char
+		case Incorrect:
+			a += "_"
+		default:
+			return "", fmt.Errorf("unrecognized correctness value: %s", c)
+		}
+	}
+
+	g.guesses++
+	return a, nil
+}
+
+func (g *Game) check(gr []rune) []Correctness {
+	c := make([]Correctness, len(gr))
 
 	// Copy the counts, don't modify the game word's state
 	counts := copyMap(g.counts)
-	gr := []rune(guess)
 	// Process each letter in the guess
 	for i := 0; i < len(gr); i++ {
 		if _, ok := counts[gr[i]]; !ok {
@@ -108,7 +124,7 @@ func (g *Game) Guess(guess string) ([]Correctness, error) {
 		}
 	}
 
-	return c, nil
+	return c
 }
 
 func (g *Game) validate(guess string) error {
