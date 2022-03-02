@@ -93,6 +93,14 @@ func (g *Game) Guess(guess string) (string, error) {
 	return a, nil
 }
 
+func (g *Game) Reveal() (string, error) {
+	if g.Remaining() != 0 {
+		return "", fmt.Errorf("you cannot reveal the answer with %d guesses left", g.Remaining())
+	}
+
+	return string(g.runes), nil
+}
+
 func (g *Game) check(gr []rune) []Correctness {
 	c := make([]Correctness, len(gr))
 
@@ -129,11 +137,11 @@ func (g *Game) check(gr []rune) []Correctness {
 
 func (g *Game) validate(guess string) error {
 	if len(g.runes) != len(guess) {
-		return errors.New("guess length does not match word length")
+		return fmt.Errorf("you must make a guess of %d letters", len(g.runes))
 	}
 
 	if _, ok := data.ALLOWED_GUESSES[guess]; !ok {
-		return errors.New("not a valid word")
+		return errors.New("invalid word")
 	}
 
 	return nil
